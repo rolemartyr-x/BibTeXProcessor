@@ -56,6 +56,17 @@ interface BibTeXEntryData {
 export default class BibTeXProcessorPlugin extends Plugin {
     async onload() {
         console.log('BibTeX plugin loaded'); // Check if plugin is loaded
+        
+        // Add ribbon icon
+        this.addRibbonIcon('bibtex', 'Process BibTeX', async () => {
+            const bibtexData = await this.openBibTeXModal();
+            if (bibtexData) {
+                await this.processBibTeX(bibtexData);
+            } else {
+                new Notice('Failed to get BibTeX data.');
+            }
+        });
+        
         // Register command to process BibTeX input
         this.addCommand({
             id: 'process-bibtex',
@@ -81,11 +92,33 @@ export default class BibTeXProcessorPlugin extends Plugin {
             // Set modal title
             modal.contentEl.appendChild(createEl('h2', { text: 'Enter BibTeX Data' }));
         
+            // Create container for columns
+            const columnsContainer = modal.contentEl.createDiv({ cls: 'columns' });
+    
+            // Create column for instructions
+            const instructionsColumn = columnsContainer.createDiv({ cls: 'column' });
+            instructionsColumn.appendChild(createEl('p', { text: 'Paste your BibTeX data:' }));
+    
+            // Create column for input box
+            const inputColumn = columnsContainer.createDiv({ cls: 'column' });
+            inputColumn.style.display = 'flex';
+            inputColumn.style.flexDirection = 'column';
+    
             // Create textarea for BibTeX input
-            const textarea = modal.contentEl.createEl('textarea', { cls: 'markdown-editor-input' });
-        
+            const textarea = inputColumn.createEl('textarea', { cls: 'markdown-editor-input' });
+            textarea.placeholder = `Paste your BibTeX data here...\n\nExample:\n\n@book{Vincent_1887,\naddress={New York},\ntitle={Word studies in the New Testament},\nvolume={2},\npublisher={Charles Scribner’s Sons},\nauthor={Vincent, Marvin Richardson},\nyear={1887},\npages={24} }`;
+            textarea.style.height = '300px'; // Adjust the height here
+
+            // Handle "Enter" key press to submit the modal
+            textarea.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // Prevent newline in textarea
+                    processButton.click(); // Simulate click on the Process button
+                }
+            });
+    
             // Create "Process" button
-            const processButton = modal.contentEl.createEl('button', { text: 'Process' });
+            const processButton = inputColumn.createEl('button', { text: 'Process' });
             processButton.onclick = () => {
                 const bibtexData = textarea.value;
                 modal.close();
@@ -95,11 +128,19 @@ export default class BibTeXProcessorPlugin extends Plugin {
                     resolve(null);
                 }
             };
-        
+    
+            // Move Process button to the bottom-right
+            const buttonWrapper = inputColumn.createDiv();
+            buttonWrapper.style.marginTop = 'auto'; // Align button to the bottom
+            buttonWrapper.style.alignSelf = 'flex-end'; // Align button to the right
+            buttonWrapper.appendChild(processButton);
+    
             // Open the modal
             modal.open();
         });
     }
+    
+    
     
 
     async processBibTeX(bibtexData: string) {
@@ -205,7 +246,10 @@ export default class BibTeXProcessorPlugin extends Plugin {
                 // Extract citekey
                 const citeKeyMatch = entry.match(/@\w+\s*{\s*([^,]+)/);
                 if (!citeKeyMatch) continue; // Skip entry if citekey is not found
-                const citeKey = citeKeyMatch[1].trim();
+                let citeKey = citeKeyMatch[1].trim();
+    
+                // Replace non-word characters with underscores
+                citeKey = citeKey.replace(/\W/g, '_');
     
                 const lines = entry.split('\n');
                 const entryData: BibTeXEntryData = {};
@@ -219,6 +263,15 @@ export default class BibTeXProcessorPlugin extends Plugin {
                         const propertyName = key.toLowerCase() as keyof BibTeXEntryData;
                         entryData[propertyName] = value.replace(/{|}/g, '').replace(/,$/, ''); // Remove trailing comma
                     }
+                }
+    
+                // Update booktitle match to handle multi-line book titles
+                const booktitleMatch = entry.match(/booktitle\s*=\s*{([^}]+(?:\s+\w.*)*)}/);
+                if (booktitleMatch) {
+                    // Remove newlines and extra whitespace from booktitle
+                    entryData.booktitle = booktitleMatch[1].replace(/\s*:\s*/g, '_').replace(/\s+/g, ' ').trim();
+                    // Replace colons with a standard replacement
+                    entryData.booktitle = entryData.booktitle.replace(/:/g, '_');
                 }
     
                 // Check if it's a reference entry
@@ -263,7 +316,31 @@ export default class BibTeXProcessorPlugin extends Plugin {
         }
     }
     
+    
+    
     buildFrontmatter(reference: Reference): string {
-        return `---\ntitle: ${reference.title}\npublisher: ${reference.publisher}\nvolume: ${reference.volume}\nauthor: ${reference.author}\nyear: ${reference.year}\npages: ${reference.pages}\n---`;
+        const frontmatter: string[] = [];
+        frontmatter.push(`---`);
+        frontmatter.push(`citeKey: ${reference.citeKey}`);
+        frontmatter.push(`title: ${reference.title}`);
+        frontmatter.push(`author: ${reference.author}`);
+        if (reference.editor) frontmatter.push(`editor: ${reference.editor}`);
+        frontmatter.push(`year: ${reference.year}`);
+        if (reference.publisher) frontmatter.push(`publisher: ${reference.publisher}`);
+        if (reference.journal) frontmatter.push(`journal: ${reference.journal}`);
+        if (reference.volume) frontmatter.push(`volume: ${reference.volume}`);
+        if (reference.number) frontmatter.push(`number: ${reference.number}`);
+        if (reference.pages) frontmatter.push(`pages: ${reference.pages}`);
+        if (reference.booktitle) frontmatter.push(`booktitle: ${reference.booktitle}`);
+        if (reference.address) frontmatter.push(`address: ${reference.address}`);
+        if (reference.month) frontmatter.push(`month: ${reference.month}`);
+        if (reference.note) frontmatter.push(`note: ${reference.note}`);
+        if (reference.doi) frontmatter.push(`doi: ${reference.doi}`);
+        if (reference.url) frontmatter.push(`url: ${reference.url}`);
+        if (reference.isbn) frontmatter.push(`isbn: ${reference.isbn}`);
+        if (reference.issn) frontmatter.push(`issn: ${reference.issn}`);
+        if (reference.abstract) frontmatter.push(`abstract: ${reference.abstract}`);
+        frontmatter.push(`---`);
+        return frontmatter.join('\n');
     }
 }
