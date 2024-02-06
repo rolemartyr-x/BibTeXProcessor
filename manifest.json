@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "1Plugin",
+	"name": "1Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "My homebrew of the Bibliosidian plugin since I couldn't get that plugin to work",
+	"author": "rolemartyr-x",
+	"authorUrl": "https://github.com/rolemartyr-x/bibTexPlugin",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }

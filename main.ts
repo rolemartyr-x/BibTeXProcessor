@@ -29,6 +29,7 @@ interface BibTeXEntryData {
 
 export default class BibTeXProcessorPlugin extends Plugin {
     async onload() {
+        console.log('BibTeX plugin loaded'); // Check if plugin is loaded
         // Register command to process BibTeX input
         this.addCommand({
             id: 'process-bibtex',
@@ -36,17 +37,19 @@ export default class BibTeXProcessorPlugin extends Plugin {
             callback: () => this.openBibTeXModal(),
         });
     }
+    
 
     openBibTeXModal() {
+        console.log('BibTeX modal opened'); // Check if modal is opened
         // Create modal
         const modal = new Modal(this.app);
-
+    
         // Set modal title
         modal.contentEl.appendChild(createEl('h2', { text: 'Enter BibTeX Data' }));
-
+    
         // Create textarea for BibTeX input
         const textarea = modal.contentEl.createEl('textarea', { cls: 'markdown-editor-input' });
-
+    
         // Create "Process" button
         const processButton = modal.contentEl.createEl('button', { text: 'Process' });
         processButton.onclick = async () => {
@@ -58,14 +61,16 @@ export default class BibTeXProcessorPlugin extends Plugin {
                 new Notice('Please enter BibTeX data.');
             }
         };
-
+    
         // Open the modal
         modal.open();
     }
+    
 
     async processBibTeX(bibtexData: string) {
         // Parse BibTeX input (You need to implement the parsing logic)
         const parsedData = this.parseBibTeX(bibtexData);
+        console.log(parsedData); // Check parsed data in console
         const vault = this.app.vault;
         if (!parsedData) return; // Parsing failed
     
@@ -79,6 +84,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
             // Create reference page
             const referencePagePath = `Sources/References/${normalizePath(title)}.md`;
+            console.log('Creating reference page:', referencePagePath); // Check reference page path
             const referencePage = await vault.create(referencePagePath, '');
             if (referencePage instanceof TFile) {
                 const referenceContent = `# ${title}`;
@@ -97,6 +103,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
             // Create author page
             const authorPagePath = `Sources/Authors/${normalizePath(name)}.md`;
+            console.log('Creating author page:', authorPagePath); // Check author page path
             const authorPage = await vault.create(authorPagePath, '');
             if (authorPage instanceof TFile) {
                 const authorContent = `# ${name}`;
@@ -107,6 +114,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
         // Display success message
         new Notice('BibTeX processing complete!');
     }
+    
     
 
     async ensureFoldersExist() {
