@@ -18,6 +18,15 @@ interface BibTeXData {
     authors: Author[];
 }
 
+interface BibTeXEntryData {
+    title?: string;
+    author?: string;
+    publisher?: string;
+    volume?: string;
+    year?: string;
+    pages?: string;
+}
+
 export default class BibTeXProcessorPlugin extends Plugin {
     async onload() {
         // Register command to process BibTeX input
@@ -59,50 +68,51 @@ export default class BibTeXProcessorPlugin extends Plugin {
         const parsedData = this.parseBibTeX(bibtexData);
         const vault = this.app.vault;
         if (!parsedData) return; // Parsing failed
-
+    
         // Generate folder hierarchy
         await this.ensureFoldersExist();
-
+    
         // Process references
         for (const reference of parsedData.references) {
             // Extract reference information
             const { title, publisher, volume, author, year, pages } = reference;
-
+    
             // Create reference page
-            const referencePagePath = `References/${normalizePath(title)}.md`;
+            const referencePagePath = `Sources/References/${normalizePath(title)}.md`;
             const referencePage = await vault.create(referencePagePath, '');
             if (referencePage instanceof TFile) {
                 const referenceContent = `# ${title}`;
                 await vault.modify(referencePage, referenceContent);
-
+    
                 // Add YAML frontmatter
                 const frontmatter = this.buildFrontmatter(reference);
                 await vault.modify(referencePage, frontmatter + '\n' + referenceContent);
             }
         }
-
+    
         // Process authors
         for (const author of parsedData.authors) {
             // Extract author information
             const { name } = author;
-
+    
             // Create author page
-            const authorPagePath = `Authors/${normalizePath(name)}.md`;
+            const authorPagePath = `Sources/Authors/${normalizePath(name)}.md`;
             const authorPage = await vault.create(authorPagePath, '');
             if (authorPage instanceof TFile) {
                 const authorContent = `# ${name}`;
                 await vault.modify(authorPage, authorContent);
             }
         }
-
+    
         // Display success message
         new Notice('BibTeX processing complete!');
     }
+    
 
     async ensureFoldersExist() {
         await this.ensureFolderExists('Sources');
-        await this.ensureFolderExists('Authors');
-        await this.ensureFolderExists('References');
+        await this.ensureFolderExists('Sources/Authors');
+        await this.ensureFolderExists('Sources/References');
     }
 
     async ensureFolderExists(folderName: string) {
@@ -111,15 +121,47 @@ export default class BibTeXProcessorPlugin extends Plugin {
             await this.app.vault.createFolder(folderName);
         }
     }
-
+    
     parseBibTeX(bibtexInput: string): BibTeXData | null {
-        // Replace this function with actual BibTeX parsing logic
-        // This function should return an object with references and authors arrays
         try {
-            // Example parsing logic
             const references: Reference[] = [];
             const authors: Author[] = [];
-            // Parse BibTeX data and populate references and authors arrays
+    
+            // Split BibTeX input into individual entries
+            const entries = bibtexInput.split('\n\n');
+    
+            // Iterate over each BibTeX entry
+            for (const entry of entries) {
+                const lines = entry.split('\n');
+                const entryData: BibTeXEntryData = {};
+    
+                // Parse each line of the entry
+                for (const line of lines) {
+                    const [key, value] = line.split('=').map(str => str.trim());
+                    if (key && value && value.startsWith('{') && value.endsWith('}')) {
+                        // Remove curly braces from value
+                        const propertyName = key.toLowerCase() as keyof BibTeXEntryData;
+                        entryData[propertyName] = value.slice(1, -1);
+                    }
+                }
+    
+                // Check if it's a reference or an author entry
+                if (entryData.title && entryData.author) {
+                    // It's a reference entry
+                    references.push({
+                        title: entryData.title,
+                        publisher: entryData.publisher || '',
+                        volume: entryData.volume || '',
+                        author: entryData.author,
+                        year: parseInt(entryData.year || '0', 10),
+                        pages: parseInt(entryData.pages || '0', 10),
+                    });
+                } else if (entryData.author) {
+                    // It's an author entry
+                    authors.push({ name: entryData.author });
+                }
+            }
+    
             return { references, authors };
         } catch (error) {
             new Notice('Failed to parse BibTeX data.');
@@ -127,6 +169,8 @@ export default class BibTeXProcessorPlugin extends Plugin {
             return null;
         }
     }
+       
+    
 
     buildFrontmatter(reference: Reference): string {
         return `---\ntitle: ${reference.title}\npublisher: ${reference.publisher}\nvolume: ${reference.volume}\nauthor: ${reference.author}\nyear: ${reference.year}\npages: ${reference.pages}\n---`;
