@@ -1,13 +1,27 @@
-import { Plugin, Notice, normalizePath, TFolder, TFile, Modal } from 'obsidian';
+import { Plugin, Notice, normalizePath, TFolder, /*TFile,*/ Modal } from 'obsidian';
 
 interface Reference {
+    citeKey: string;
     title: string;
-    publisher: string;
-    volume: string;
     author: string;
+    editor?: string;
     year: number;
-    pages: number;
+    publisher?: string;
+    journal?: string;
+    volume?: string;
+    number?: string;
+    pages?: string;
+    booktitle?: string;
+    address?: string;
+    month?: string;
+    note?: string;
+    doi?: string;
+    url?: string;
+    isbn?: string;
+    issn?: string;
+    abstract?: string;
 }
+
 
 interface Author {
     name: string;
@@ -21,10 +35,22 @@ interface BibTeXData {
 interface BibTeXEntryData {
     title?: string;
     author?: string;
-    publisher?: string;
-    volume?: string;
+    editor?: string;
     year?: string;
+    publisher?: string;
+    journal?: string;
+    volume?: string;
+    number?: string;
     pages?: string;
+    booktitle?: string;
+    address?: string;
+    month?: string;
+    note?: string;
+    doi?: string;
+    url?: string;
+    isbn?: string;
+    issn?: string;
+    abstract?: string;
 }
 
 export default class BibTeXProcessorPlugin extends Plugin {
@@ -34,80 +60,116 @@ export default class BibTeXProcessorPlugin extends Plugin {
         this.addCommand({
             id: 'process-bibtex',
             name: 'Process BibTeX',
-            callback: () => this.openBibTeXModal(),
+            callback: async () => {
+                const bibtexData = await this.openBibTeXModal();
+                if (bibtexData) {
+                    await this.processBibTeX(bibtexData);
+                } else {
+                    new Notice('Failed to get BibTeX data.');
+                }
+            },
         });
     }
     
 
-    openBibTeXModal() {
+    openBibTeXModal(): Promise<string | null> {
         console.log('BibTeX modal opened'); // Check if modal is opened
-        // Create modal
-        const modal = new Modal(this.app);
-    
-        // Set modal title
-        modal.contentEl.appendChild(createEl('h2', { text: 'Enter BibTeX Data' }));
-    
-        // Create textarea for BibTeX input
-        const textarea = modal.contentEl.createEl('textarea', { cls: 'markdown-editor-input' });
-    
-        // Create "Process" button
-        const processButton = modal.contentEl.createEl('button', { text: 'Process' });
-        processButton.onclick = async () => {
-            const bibtexData = textarea.value;
-            modal.close();
-            if (bibtexData.trim() !== '') {
-                await this.processBibTeX(bibtexData);
-            } else {
-                new Notice('Please enter BibTeX data.');
-            }
-        };
-    
-        // Open the modal
-        modal.open();
+        return new Promise((resolve) => {
+            // Create modal
+            const modal = new Modal(this.app);
+        
+            // Set modal title
+            modal.contentEl.appendChild(createEl('h2', { text: 'Enter BibTeX Data' }));
+        
+            // Create textarea for BibTeX input
+            const textarea = modal.contentEl.createEl('textarea', { cls: 'markdown-editor-input' });
+        
+            // Create "Process" button
+            const processButton = modal.contentEl.createEl('button', { text: 'Process' });
+            processButton.onclick = () => {
+                const bibtexData = textarea.value;
+                modal.close();
+                if (bibtexData.trim() !== '') {
+                    resolve(bibtexData);
+                } else {
+                    resolve(null);
+                }
+            };
+        
+            // Open the modal
+            modal.open();
+        });
     }
     
 
     async processBibTeX(bibtexData: string) {
-        // Parse BibTeX input (You need to implement the parsing logic)
+        console.log('Processing BibTeX data:', bibtexData); // Check the BibTeX data
+        // Parse BibTeX input
         const parsedData = this.parseBibTeX(bibtexData);
-        console.log(parsedData); // Check parsed data in console
-        const vault = this.app.vault;
-        if (!parsedData) return; // Parsing failed
+        console.log('Parsed BibTeX data:', parsedData); // Check the parsed data
+        if (!parsedData) {
+            new Notice('Failed to parse BibTeX data.');
+            return;
+        }
     
-        // Generate folder hierarchy
+        // Generate folder hierarchy if necessary
+        console.log('Ensuring folders exist...'); // Check if ensuring folders exist
         await this.ensureFoldersExist();
     
+        const vault = this.app.vault;
+    
         // Process references
+        console.log('Processing references...'); // Check if processing references
         for (const reference of parsedData.references) {
-            // Extract reference information
-            const { title, publisher, volume, author, year, pages } = reference;
+            const { title } = reference;
+    
+            // Check if reference page already exists
+            const referencePagePath = `Sources/References/${normalizePath(title)}.md`;
+            const referencePageExists = await vault.adapter.exists(referencePagePath);
+    
+            // If reference page already exists, skip creation
+            if (referencePageExists) {
+                console.log(`Reference page already exists: ${referencePagePath}`);
+                continue;
+            }
     
             // Create reference page
-            const referencePagePath = `Sources/References/${normalizePath(title)}.md`;
-            console.log('Creating reference page:', referencePagePath); // Check reference page path
-            const referencePage = await vault.create(referencePagePath, '');
-            if (referencePage instanceof TFile) {
+            try {
+                console.log(`Creating reference page: ${referencePagePath}`); // Check if creating reference page
                 const referenceContent = `# ${title}`;
-                await vault.modify(referencePage, referenceContent);
-    
-                // Add YAML frontmatter
                 const frontmatter = this.buildFrontmatter(reference);
-                await vault.modify(referencePage, frontmatter + '\n' + referenceContent);
+                const fullContent = `${frontmatter}\n${referenceContent}`;
+    
+                await vault.create(referencePagePath, fullContent);
+                console.log(`Created reference page: ${referencePagePath}`);
+            } catch (error) {
+                console.error('Error creating reference page:', error);
             }
         }
     
         // Process authors
+        console.log('Processing authors...'); // Check if processing authors
         for (const author of parsedData.authors) {
-            // Extract author information
             const { name } = author;
     
-            // Create author page
+            // Check if author page already exists
             const authorPagePath = `Sources/Authors/${normalizePath(name)}.md`;
-            console.log('Creating author page:', authorPagePath); // Check author page path
-            const authorPage = await vault.create(authorPagePath, '');
-            if (authorPage instanceof TFile) {
+            const authorPageExists = await vault.adapter.exists(authorPagePath);
+    
+            // If author page already exists, skip creation
+            if (authorPageExists) {
+                console.log(`Author page already exists: ${authorPagePath}`);
+                continue;
+            }
+    
+            // Create author page
+            try {
+                console.log(`Creating author page: ${authorPagePath}`); // Check if creating author page
                 const authorContent = `# ${name}`;
-                await vault.modify(authorPage, authorContent);
+                await vault.create(authorPagePath, authorContent);
+                console.log(`Created author page: ${authorPagePath}`);
+            } catch (error) {
+                console.error('Error creating author page:', error);
             }
         }
     
@@ -140,33 +202,56 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
             // Iterate over each BibTeX entry
             for (const entry of entries) {
+                // Extract citekey
+                const citeKeyMatch = entry.match(/@\w+\s*{\s*([^,]+)/);
+                if (!citeKeyMatch) continue; // Skip entry if citekey is not found
+                const citeKey = citeKeyMatch[1].trim();
+    
                 const lines = entry.split('\n');
                 const entryData: BibTeXEntryData = {};
     
                 // Parse each line of the entry
                 for (const line of lines) {
-                    const [key, value] = line.split('=').map(str => str.trim());
-                    if (key && value && value.startsWith('{') && value.endsWith('}')) {
+                    const [key, ...values] = line.split('=').map(str => str.trim());
+                    const value = values.join('=').trim();
+                    if (key && value) {
                         // Remove curly braces from value
                         const propertyName = key.toLowerCase() as keyof BibTeXEntryData;
-                        entryData[propertyName] = value.slice(1, -1);
+                        entryData[propertyName] = value.replace(/{|}/g, '').replace(/,$/, ''); // Remove trailing comma
                     }
                 }
     
-                // Check if it's a reference or an author entry
+                // Check if it's a reference entry
                 if (entryData.title && entryData.author) {
-                    // It's a reference entry
                     references.push({
-                        title: entryData.title,
-                        publisher: entryData.publisher || '',
-                        volume: entryData.volume || '',
+                        citeKey,
+                        abstract: entryData.abstract || '',
+                        address: entryData.address || '',
                         author: entryData.author,
-                        year: parseInt(entryData.year || '0', 10),
-                        pages: parseInt(entryData.pages || '0', 10),
+                        booktitle: entryData.booktitle || '',
+                        doi: entryData.doi || '',
+                        editor: entryData.editor || '',
+                        isbn: entryData.isbn || '',
+                        issn: entryData.issn || '',
+                        journal: entryData.journal || '',
+                        month: entryData.month || '',
+                        note: entryData.note || '',
+                        number: entryData.number || '',
+                        pages: entryData.pages || '',
+                        publisher: entryData.publisher || '',
+                        title: entryData.title || '',
+                        url: entryData.url || '',
+                        volume: entryData.volume || '',
+                        year: parseInt(entryData.year || '0', 10),             
                     });
-                } else if (entryData.author) {
-                    // It's an author entry
-                    authors.push({ name: entryData.author });
+                }
+    
+                // Check if it's an author entry
+                if (entryData.author) {
+                    const authorNames = entryData.author.split(' and ').map(name => name.trim());
+                    authorNames.forEach(authorName => {
+                        authors.push({ name: authorName });
+                    });
                 }
             }
     
@@ -177,9 +262,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
             return null;
         }
     }
-       
     
-
     buildFrontmatter(reference: Reference): string {
         return `---\ntitle: ${reference.title}\npublisher: ${reference.publisher}\nvolume: ${reference.volume}\nauthor: ${reference.author}\nyear: ${reference.year}\npages: ${reference.pages}\n---`;
     }
