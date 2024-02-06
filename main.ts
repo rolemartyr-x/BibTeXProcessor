@@ -1,4 +1,4 @@
-import { Plugin, Notice, normalizePath, TFile, MarkdownView, Modal } from 'obsidian';
+import { Plugin, Notice, normalizePath, TFolder, TFile, Modal } from 'obsidian';
 
 interface Reference {
     title: string;
@@ -57,18 +57,11 @@ export default class BibTeXProcessorPlugin extends Plugin {
     async processBibTeX(bibtexData: string) {
         // Parse BibTeX input (You need to implement the parsing logic)
         const parsedData = this.parseBibTeX(bibtexData);
+        const vault = this.app.vault;
         if (!parsedData) return; // Parsing failed
 
         // Generate folder hierarchy
-        const vault = this.app.vault;
-        const sourcesFolder = vault.getAbstractFileByPath('Sources');
-        const authorsFolder = vault.getAbstractFileByPath('Authors');
-        const referencesFolder = vault.getAbstractFileByPath('References');
-
-        if (!sourcesFolder || !authorsFolder || !referencesFolder) {
-            new Notice('Failed to create necessary folders.');
-            return;
-        }
+        await this.ensureFoldersExist();
 
         // Process references
         for (const reference of parsedData.references) {
@@ -104,6 +97,19 @@ export default class BibTeXProcessorPlugin extends Plugin {
 
         // Display success message
         new Notice('BibTeX processing complete!');
+    }
+
+    async ensureFoldersExist() {
+        await this.ensureFolderExists('Sources');
+        await this.ensureFolderExists('Authors');
+        await this.ensureFolderExists('References');
+    }
+
+    async ensureFolderExists(folderName: string) {
+        const folder = this.app.vault.getAbstractFileByPath(folderName);
+        if (!folder || !(folder instanceof TFolder)) {
+            await this.app.vault.createFolder(folderName);
+        }
     }
 
     parseBibTeX(bibtexInput: string): BibTeXData | null {
