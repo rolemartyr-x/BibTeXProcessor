@@ -22,17 +22,13 @@ The BibTeX Processor Plugin for Obsidian allows you to easily process BibTeX dat
 Until this plugin is available in Community Plugins, you will need to clone the repository and build it yourself.
 
 1. You need to have the following installed:
-
-- npm
-- git
-
+    - npm
+    - git
 1. Open the .obsidian/plugins/ folder of your vault in a system shell or terminal. You can get here directly in the terminal or otherwise have Obsidian help you:
-
-- You will need to enable "Community Plugins" for this to work.
-- Open the settings panel in Obsidian, and navigate to the Plugins section
-- Enable community plugins and then click "open plugins folder".
-- Open a terminal window in this folder.
-
+    - You will need to enable "Community Plugins" for this to work.
+    - Open the settings panel in Obsidian, and navigate to the Plugins section
+    - Enable community plugins and then click "open plugins folder".
+    - Open a terminal window in this folder.
 1. Run: git clone <git@github.com>:rolemartyr-x/BibTeXProcessor.git
 1. Run: npm i
 1. Run: npm run build
