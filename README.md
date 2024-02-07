@@ -1,96 +1,59 @@
-# Obsidian Sample Plugin
+# BibTeX Processor Plugin
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+The BibTeX Processor Plugin for Obsidian allows you to easily process BibTeX data directly within your Obsidian vault. With this plugin, you can paste your BibTeX data into a modal, and it will automatically create reference pages for each entry in your specified folder structure.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+- Take in BibTeX citations and create reference and author pages based on that citation
+- Creates a Sources folder with both a References and an Authors folder underneath
+- Automatically create author pages for each author in the BibTeX citation
+- Automatically create reference pages for each reaference in the BibTeX citation
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## Usage
 
-## First time developing plugins?
+- Open the BibTeX Processor modal by clicking on the ribbon icon or using the Process BibTeX command in the command palette.
+- Paste your BibTeX data into the input field.
+- Click the Process button to create reference and author pages based on the provided data.
+- The plugin will automatically create folders for references and authors if they don't exist already.
+- The plugin will update existing reference and author pages if they already exist
 
-Quick starting guide for new plugin devs:
+## Installation
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+Until this plugin is available in Community Plugins, you will need to clone the repository and build it yourself.
 
-## Releasing new releases
+1. You need to have the following installed:
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+- npm
+- git
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+1. Open the .obsidian/plugins/ folder of your vault in a system shell or terminal. You can get here directly in the terminal or otherwise have Obsidian help you:
 
-## Adding your plugin to the community plugin list
+- You will need to enable "Community Plugins" for this to work.
+- Open the settings panel in Obsidian, and navigate to the Plugins section
+- Enable community plugins and then click "open plugins folder".
+- Open a terminal window in this folder.
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. Run: git clone <git@github.com>:rolemartyr-x/BibTeXProcessor.git
+1. Run: npm i
+1. Run: npm run build
+1. Enable the plugin from the "Community Plugins" settings page
 
-## How to use
+This will produce a main.js file inside the repository folder, which Obsidian can open and make use of directly. Be sure to enable the plugin from your Community Plugins screen
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+Instruction to install once this included in Community Plugins:
 
-## Manually installing the plugin
+1. Navigate to the Community Plugins section in the Obsidian settings.
+2. Search for "BibTeX Processor" and click "Install" to enable the plugin.
+3. Ensure that the plugin is activated in your settings.
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+## Contributing
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+If you encounter any issues or have suggestions for improvements, feel free to open an issue or submit a pull request on the GitHub repository.
 
-## Funding URL
+## License
 
-You can include funding URLs where people who use your plugin can financially support it.
+This plugin is distributed under the MIT License. See the LICENSE file for more information.
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+## Obsidian API Documentation
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
-
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
-
-## API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+See <https://github.com/obsidianmd/obsidian-api>
