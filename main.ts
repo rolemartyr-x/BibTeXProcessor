@@ -370,10 +370,12 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
     buildFrontmatter(reference: Reference): string {
         const frontmatter: string[] = [];
+        const authors = reference.author.split(' and ').map(name => `- "[[${name.trim()}]]"`).join('\n');
+        
         frontmatter.push(`---`);
         frontmatter.push(`citeKey: ${reference.citeKey}`);
         frontmatter.push(`title: ${reference.title}`);
-        frontmatter.push(`author: ${reference.author}`);
+        frontmatter.push(`author: \n${authors}`);
         if (reference.editor) frontmatter.push(`editor: ${reference.editor}`);
         frontmatter.push(`year: ${reference.year}`);
         if (reference.publisher) frontmatter.push(`publisher: ${reference.publisher}`);
