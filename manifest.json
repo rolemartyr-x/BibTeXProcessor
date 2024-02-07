@@ -1,11 +1,11 @@
 {
-	"id": "1Plugin",
-	"name": "1Plugin",
+	"id": "obsidian-BibTeX-Processor",
+	"name": "BibTeX Processor",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "My homebrew of the Bibliosidian plugin since I couldn't get that plugin to work",
+	"description": "My take on the Bibliosidian plug-in to add frontmatter to pages.",
 	"author": "rolemartyr-x",
 	"authorUrl": "https://github.com/rolemartyr-x/bibTexPlugin",
-	"fundingUrl": "",
+	"fundingUrl": "https://www.paypal.com/donate/?business=QKLVQL9EAHJ44&no_recurring=0&item_name=Thank+you+for+your+support%21&currency_code=USD",
 	"isDesktopOnly": false
 }
