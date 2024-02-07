@@ -58,7 +58,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
         console.log('BibTeX plugin loaded'); // Check if plugin is loaded
         
         // Add ribbon icon
-        this.addRibbonIcon('bibtex', 'Process BibTeX', async () => {
+        this.addRibbonIcon('book-open-check', 'Process BibTeX', async () => {
             const bibtexData = await this.openBibTeXModal();
             if (bibtexData) {
                 await this.processBibTeX(bibtexData);
