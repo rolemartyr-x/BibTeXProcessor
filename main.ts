@@ -1,4 +1,4 @@
-import { Plugin, Notice, normalizePath, TFolder, /*TFile,*/ Modal } from 'obsidian';
+import { Plugin, Notice, normalizePath, TFolder, TFile, Modal } from 'obsidian';
 
 interface Reference {
     citeKey: string;
@@ -58,7 +58,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
         console.log('BibTeX plugin loaded'); // Check if plugin is loaded
         
         // Add ribbon icon
-        this.addRibbonIcon('bibtex', 'Process BibTeX', async () => {
+        this.addRibbonIcon('book-open-check', 'Process BibTeX', async () => {
             const bibtexData = await this.openBibTeXModal();
             if (bibtexData) {
                 await this.processBibTeX(bibtexData);
@@ -139,9 +139,6 @@ export default class BibTeXProcessorPlugin extends Plugin {
             modal.open();
         });
     }
-    
-    
-    
 
     async processBibTeX(bibtexData: string) {
         console.log('Processing BibTeX data:', bibtexData); // Check the BibTeX data
@@ -191,26 +188,13 @@ export default class BibTeXProcessorPlugin extends Plugin {
         // Process authors
         console.log('Processing authors...'); // Check if processing authors
         for (const author of parsedData.authors) {
-            const { name } = author;
-    
-            // Check if author page already exists
-            const authorPagePath = `Sources/Authors/${normalizePath(name)}.md`;
-            const authorPageExists = await vault.adapter.exists(authorPagePath);
-    
-            // If author page already exists, skip creation
-            if (authorPageExists) {
-                console.log(`Author page already exists: ${authorPagePath}`);
-                continue;
-            }
-    
-            // Create author page
-            try {
-                console.log(`Creating author page: ${authorPagePath}`); // Check if creating author page
-                const authorContent = `# ${name}`;
-                await vault.create(authorPagePath, authorContent);
-                console.log(`Created author page: ${authorPagePath}`);
-            } catch (error) {
-                console.error('Error creating author page:', error);
+            const authorPagePath = `Sources/Authors/${normalizePath(author.name)}.md`;
+            const authorPage = vault.getAbstractFileByPath(authorPagePath) as TFile; // Cast to TFile
+            if (authorPage) {
+                await this.updateAuthorPageContent(authorPage, author.name, parsedData.references);
+            } else {
+                // If author page doesn't exist, create it
+                await this.createAuthorPage(authorPagePath, author.name, parsedData.references);
             }
         }
     
@@ -218,8 +202,74 @@ export default class BibTeXProcessorPlugin extends Plugin {
         new Notice('BibTeX processing complete!');
     }
     
+    async updateAuthorPageContent(authorPage: TFile, authorName: string, references: Reference[]) {
+        try {
+            // Read current content of the author page
+            let authorPageContent = await this.app.vault.read(authorPage);
     
-
+            // Check if the author page content already contains the "References" heading
+            const referencesHeading = '### References';
+            let referencesHeadingIndex = authorPageContent.indexOf(referencesHeading);
+            if (referencesHeadingIndex === -1) {
+                // If the "References" heading doesn't exist, find the end of the file
+                referencesHeadingIndex = authorPageContent.length;
+            } else {
+                // If the "References" heading exists, find the end of the heading section
+                const endOfReferencesIndex = authorPageContent.indexOf('\n\n', referencesHeadingIndex + referencesHeading.length);
+                if (endOfReferencesIndex !== -1) {
+                    referencesHeadingIndex = endOfReferencesIndex;
+                } else {
+                    referencesHeadingIndex = authorPageContent.length;
+                }
+            }
+    
+            // Append the reference links
+            const referenceLinks = references
+                .filter((reference) => {
+                    const referenceAuthors = reference.author.split(' and ').map(name => name.trim());
+                    return referenceAuthors.includes(authorName);
+                })
+                .map((reference) => `[[${reference.title}]]`);
+            authorPageContent = `${authorPageContent.slice(0, referencesHeadingIndex)}\n${referenceLinks.join('\n')}${authorPageContent.slice(referencesHeadingIndex)}`;
+    
+            // Update the author page with the new content
+            await this.app.vault.modify(authorPage, authorPageContent);
+        } catch (error) {
+            console.error('Error updating author page:', error);
+        }
+    }
+    
+    
+        
+    async createAuthorPage(authorPagePath: string, authorName: string, references: Reference[]) {
+        try {
+            console.log(`Creating author page: ${authorPagePath}`);
+            const frontmatter = `---\ntitle: ${authorName}\n---`;
+            let authorPageContent = `${frontmatter}\n\n# ${authorName}`;
+    
+            // Check if any references exist for this author
+            const authorReferences = references.filter((reference) => {
+                const referenceAuthors = reference.author.split(' and ').map(name => name.trim());
+                return referenceAuthors.includes(authorName);
+            });
+    
+            if (authorReferences.length > 0) {
+                authorPageContent += '\n\n### References\n'; // Add the "References" heading
+                // Add reference links
+                authorReferences.forEach((reference) => {
+                    authorPageContent += `[[${reference.title}]]`;
+                });
+            }
+    
+            await this.app.vault.create(authorPagePath, authorPageContent);
+            console.log(`Created author page: ${authorPagePath}`);
+        } catch (error) {
+            console.error('Error creating author page:', error);
+        }
+    }
+    
+    
+    
     async ensureFoldersExist() {
         await this.ensureFolderExists('Sources');
         await this.ensureFolderExists('Sources/Authors');
@@ -320,10 +370,12 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
     buildFrontmatter(reference: Reference): string {
         const frontmatter: string[] = [];
+        const authors = reference.author.split(' and ').map(name => `- "[[${name.trim()}]]"`).join('\n');
+        
         frontmatter.push(`---`);
         frontmatter.push(`citeKey: ${reference.citeKey}`);
         frontmatter.push(`title: ${reference.title}`);
-        frontmatter.push(`author: ${reference.author}`);
+        frontmatter.push(`author: \n${authors}`);
         if (reference.editor) frontmatter.push(`editor: ${reference.editor}`);
         frontmatter.push(`year: ${reference.year}`);
         if (reference.publisher) frontmatter.push(`publisher: ${reference.publisher}`);
