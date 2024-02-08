@@ -316,10 +316,10 @@ export default class BibTeXProcessorPlugin extends Plugin {
                 }
     
                 // Update booktitle match to handle multi-line book titles
-                const booktitleMatch = entry.match(/booktitle\s*=\s*{([^}]+(?:\s+\w.*)*)}/);
+                const booktitleMatch = entry.match(/booktitle\s*=\s*{([^}{]+)}/);
                 if (booktitleMatch) {
                     // Remove newlines and extra whitespace from booktitle
-                    entryData.booktitle = booktitleMatch[1].replace(/\s*:\s*/g, '_').replace(/\s+/g, ' ').trim();
+                    entryData.booktitle = booktitleMatch[1].replace(/\s+/g, ' ').trim().replace(/ /g, '_');
                     // Replace colons with a standard replacement
                     entryData.booktitle = entryData.booktitle.replace(/:/g, '_');
                 }
