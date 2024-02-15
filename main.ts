@@ -312,7 +312,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
                     const value = values.join('=').trim();
                     if (key && value) {
                         // Remove leading and trailing braces and any extra spaces
-                        const cleanedValue = value.replace(/^{?\s*|}?,?\s*$/g, '').trim();
+                        const cleanedValue = value.replace(/^{?\s*|}?,?/g, '').trim();
                         const cleanedKey = key.replace(/[{}]/g, '').trim();
                         const propertyName = cleanedKey.toLowerCase() as keyof BibTeXEntryData;
                         entryData[propertyName] = cleanedValue;
@@ -329,7 +329,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
                         year: parseInt(entryData.year || '0', 10),
                         journal: entryData.journal || '',
                         volume: entryData.volume || '',
-                        pages: entryData.pages?.replace(/}/, '') || '',
+                        pages: entryData.pages || '',
                         doi: entryData.doi || '',
                         url: entryData.url || '',
                         eprint: entryData.eprint || ''
