@@ -20,6 +20,7 @@ interface Reference {
     isbn?: string;
     issn?: string;
     abstract?: string;
+    eprint?: string;
 }
 
 
@@ -51,6 +52,7 @@ interface BibTeXEntryData {
     isbn?: string;
     issn?: string;
     abstract?: string;
+    eprint?: string;
 }
 
 export default class BibTeXProcessorPlugin extends Plugin {
@@ -309,19 +311,12 @@ export default class BibTeXProcessorPlugin extends Plugin {
                     const [key, ...values] = line.split('=').map(str => str.trim());
                     const value = values.join('=').trim();
                     if (key && value) {
-                        // Remove curly braces from value
-                        const propertyName = key.toLowerCase() as keyof BibTeXEntryData;
-                        entryData[propertyName] = value.replace(/{|}/g, '').replace(/,$/, ''); // Remove trailing comma
+                        // Remove leading and trailing braces and any extra spaces
+                        const cleanedValue = value.replace(/^{?\s*|}?,?/g, '').trim();
+                        const cleanedKey = key.replace(/[{}]/g, '').trim();
+                        const propertyName = cleanedKey.toLowerCase() as keyof BibTeXEntryData;
+                        entryData[propertyName] = cleanedValue;
                     }
-                }
-    
-                // Update booktitle match to handle multi-line book titles
-                const booktitleMatch = entry.match(/booktitle\s*=\s*{([^}{]+)}/);
-                if (booktitleMatch) {
-                    // Remove newlines and extra whitespace from booktitle
-                    entryData.booktitle = booktitleMatch[1].replace(/\s+/g, ' ').trim().replace(/ /g, '_');
-                    // Replace colons with a standard replacement
-                    entryData.booktitle = entryData.booktitle.replace(/:/g, '_');
                 }
     
                 // Check if it's a reference entry
@@ -329,23 +324,15 @@ export default class BibTeXProcessorPlugin extends Plugin {
                     references.push({
                         citeKey,
                         abstract: entryData.abstract || '',
-                        address: entryData.address || '',
                         author: entryData.author,
-                        booktitle: entryData.booktitle || '',
-                        doi: entryData.doi || '',
-                        editor: entryData.editor || '',
-                        isbn: entryData.isbn || '',
-                        issn: entryData.issn || '',
+                        title: entryData.title,
+                        year: parseInt(entryData.year || '0', 10),
                         journal: entryData.journal || '',
-                        month: entryData.month || '',
-                        note: entryData.note || '',
-                        number: entryData.number || '',
-                        pages: entryData.pages || '',
-                        publisher: entryData.publisher || '',
-                        title: entryData.title || '',
-                        url: entryData.url || '',
                         volume: entryData.volume || '',
-                        year: parseInt(entryData.year || '0', 10),             
+                        pages: entryData.pages || '',
+                        doi: entryData.doi || '',
+                        url: entryData.url || '',
+                        eprint: entryData.eprint || ''
                     });
                 }
     
@@ -366,8 +353,8 @@ export default class BibTeXProcessorPlugin extends Plugin {
         }
     }
     
-    
-    
+        
+        
     buildFrontmatter(reference: Reference): string {
         const frontmatter: string[] = [];
         const authors = reference.author.split(' and ').map(name => `- "[[${name.trim()}]]"`).join('\n');
@@ -391,6 +378,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
         if (reference.url) frontmatter.push(`url: ${reference.url}`);
         if (reference.isbn) frontmatter.push(`isbn: ${reference.isbn}`);
         if (reference.issn) frontmatter.push(`issn: ${reference.issn}`);
+        if (reference.eprint) frontmatter.push(`eprint: ${reference.eprint}`);
         if (reference.abstract) frontmatter.push(`abstract: ${reference.abstract}`);
         frontmatter.push(`---`);
         return frontmatter.join('\n');
