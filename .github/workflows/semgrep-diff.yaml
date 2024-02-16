@@ -1,7 +1,9 @@
 name: Semgrep Differential Scan
 on:
-  pull_request
-
+  push:
+    branches: ["develop"]
+  pull_request: {}
+    
 jobs:
 
   semgrep-diff:
