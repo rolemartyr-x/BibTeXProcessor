@@ -176,8 +176,13 @@ export default class BibTeXProcessorPlugin extends Plugin {
             // Create reference page
             try {
                 console.log(`Creating reference page: ${referencePagePath}`); // Check if creating reference page
-                const referenceContent = `# ${title}`;
+                let referenceContent = `# ${title}`;
                 const frontmatter = this.buildFrontmatter(reference);
+
+                if(reference.abstract != ""){
+                    referenceContent = referenceContent + `\n## Abstract\n${reference.abstract}`;
+                }
+
                 const fullContent = `${frontmatter}\n${referenceContent}`;
     
                 await vault.create(referencePagePath, fullContent);
@@ -379,7 +384,6 @@ export default class BibTeXProcessorPlugin extends Plugin {
         if (reference.isbn) frontmatter.push(`isbn: ${reference.isbn}`);
         if (reference.issn) frontmatter.push(`issn: ${reference.issn}`);
         if (reference.eprint) frontmatter.push(`eprint: ${reference.eprint}`);
-        if (reference.abstract) frontmatter.push(`abstract: ${reference.abstract}`);
         frontmatter.push(`---`);
         return frontmatter.join('\n');
     }
