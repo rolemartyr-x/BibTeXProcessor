@@ -1,5 +1,6 @@
 import { Plugin, Notice, normalizePath, TFolder, TFile } from 'obsidian';
 import { openBibTeXModal } from './interface';
+import { } from './authors';
 
 interface Reference {
     citeKey: string;
@@ -58,7 +59,7 @@ interface BibTeXEntryData {
 
 export default class BibTeXProcessorPlugin extends Plugin {
     async onload() {
-        console.log('BibTeX plugin loaded'); // Check if plugin is loaded
+        console.log('BibTeX plugin loaded');
         
         // Add ribbon icon
         this.addRibbonIcon('book-open-check', 'Process BibTeX', async () => {
@@ -70,7 +71,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
             }
         });
         
-        // Register command to process BibTeX input
+        // Register command for command palette
         this.addCommand({
             id: 'process-bibtex',
             name: 'Process BibTeX',
@@ -240,13 +241,18 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
             // Split BibTeX input into individual entries
             const entries = bibtexInput.split('\n\n');
+            console.log('Number of BibTeX entries:', entries.length);
     
             // Iterate over each BibTeX entry
             for (const entry of entries) {
                 // Extract citekey
                 const citeKeyMatch = entry.match(/@\w+\s*{\s*([^,]+)/);
-                if (!citeKeyMatch) continue; // Skip entry if citekey is not found
+                if (!citeKeyMatch) {
+                    console.log('Failed to extract citekey:', entry);
+                    continue;
+                } // Skip entry if citekey is not found
                 let citeKey = citeKeyMatch[1].trim();
+                console.log('Citekey:', citeKey);
     
                 // Replace non-word characters with underscores
                 citeKey = citeKey.replace(/\W/g, '_');
@@ -266,9 +272,12 @@ export default class BibTeXProcessorPlugin extends Plugin {
                         entryData[propertyName] = cleanedValue;
                     }
                 }
+
+                console.log('Parsed entry data:', entryData);
     
                 // Check if it's a reference entry
                 if (entryData.title && entryData.author) {
+                    console.log('Adding reference:', entryData);
                     references.push({
                         citeKey,
                         abstract: entryData.abstract || '',
@@ -290,8 +299,12 @@ export default class BibTeXProcessorPlugin extends Plugin {
                     authorNames.forEach(authorName => {
                         authors.push({ name: authorName });
                     });
+                    console.log('Adding author:', authorNames);
                 }
             }
+
+            console.log('Parsed references:', references);
+            console.log('Parsed authors:', authors);
     
             return { references, authors };
         } catch (error) {
