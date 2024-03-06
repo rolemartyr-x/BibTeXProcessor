@@ -241,18 +241,15 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
             // Split BibTeX input into individual entries
             const entries = bibtexInput.split('\n\n');
-            console.log('Number of BibTeX entries:', entries.length);
+            console.log('Number of BibTeX entries:', entries.length); // Add this line
     
             // Iterate over each BibTeX entry
             for (const entry of entries) {
                 // Extract citekey
                 const citeKeyMatch = entry.match(/@\w+\s*{\s*([^,]+)/);
-                if (!citeKeyMatch) {
-                    console.log('Failed to extract citekey:', entry);
-                    continue;
-                } // Skip entry if citekey is not found
+                if (!citeKeyMatch) continue; // Skip entry if citekey is not found
                 let citeKey = citeKeyMatch[1].trim();
-                console.log('Citekey:', citeKey);
+                console.log('Citekey:', citeKey); // Add this line
     
                 // Replace non-word characters with underscores
                 citeKey = citeKey.replace(/\W/g, '_');
@@ -272,12 +269,11 @@ export default class BibTeXProcessorPlugin extends Plugin {
                         entryData[propertyName] = cleanedValue;
                     }
                 }
-
-                console.log('Parsed entry data:', entryData);
+    
+                console.log('Parsed entry data:', entryData); // Add this line
     
                 // Check if it's a reference entry
                 if (entryData.title && entryData.author) {
-                    console.log('Adding reference:', entryData);
                     references.push({
                         citeKey,
                         abstract: entryData.abstract || '',
@@ -295,16 +291,16 @@ export default class BibTeXProcessorPlugin extends Plugin {
     
                 // Check if it's an author entry
                 if (entryData.author) {
-                    const authorNames = entryData.author.split(' and ').map(name => name.trim());
+                    const authorNames = entryData.author.split(/\s+and\s+/).map(name => name.trim());
+                    console.log('Parsed author names:', authorNames); // Add this line
                     authorNames.forEach(authorName => {
                         authors.push({ name: authorName });
                     });
-                    console.log('Adding author:', authorNames);
                 }
             }
-
-            console.log('Parsed references:', references);
-            console.log('Parsed authors:', authors);
+    
+            console.log('Parsed references:', references); // Add this line
+            console.log('Parsed authors:', authors); // Add this line
     
             return { references, authors };
         } catch (error) {
@@ -313,6 +309,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
             return null;
         }
     }
+    
     
         
         
