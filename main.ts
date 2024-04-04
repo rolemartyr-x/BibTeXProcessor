@@ -1,8 +1,8 @@
 import { Plugin, Notice, normalizePath, TFolder, TFile } from 'obsidian';
 import { openBibTeXModal } from './interface';
-import { } from './authors';
+import { createAuthorPage, updateAuthorPageContent} from './authors';
 
-interface Reference {
+export interface Reference {
     citeKey: string;
     title: string;
     author: string;
@@ -142,84 +142,16 @@ export default class BibTeXProcessorPlugin extends Plugin {
             const authorPagePath = `Sources/Authors/${normalizePath(author.name)}.md`;
             const authorPage = vault.getAbstractFileByPath(authorPagePath) as TFile; // Cast to TFile
             if (authorPage) {
-                await this.updateAuthorPageContent(authorPage, author.name, parsedData.references);
+                await updateAuthorPageContent(authorPage, author.name, parsedData.references, vault);
             } else {
                 // If author page doesn't exist, create it
-                await this.createAuthorPage(authorPagePath, author.name, parsedData.references);
+                await createAuthorPage(authorPagePath, author.name, parsedData.references, vault);
             }
         }
     
         // Display success message
         new Notice('BibTeX processing complete!');
     }
-    
-    async updateAuthorPageContent(authorPage: TFile, authorName: string, references: Reference[]) {
-        try {
-            // Read current content of the author page
-            let authorPageContent = await this.app.vault.read(authorPage);
-    
-            // Check if the author page content already contains the "References" heading
-            const referencesHeading = '### References';
-            let referencesHeadingIndex = authorPageContent.indexOf(referencesHeading);
-            if (referencesHeadingIndex === -1) {
-                // If the "References" heading doesn't exist, find the end of the file
-                referencesHeadingIndex = authorPageContent.length;
-            } else {
-                // If the "References" heading exists, find the end of the heading section
-                const endOfReferencesIndex = authorPageContent.indexOf('\n\n', referencesHeadingIndex + referencesHeading.length);
-                if (endOfReferencesIndex !== -1) {
-                    referencesHeadingIndex = endOfReferencesIndex;
-                } else {
-                    referencesHeadingIndex = authorPageContent.length;
-                }
-            }
-    
-            // Append the reference links
-            const referenceLinks = references
-                .filter((reference) => {
-                    const referenceAuthors = reference.author.split(' and ').map(name => name.trim());
-                    return referenceAuthors.includes(authorName);
-                })
-                .map((reference) => `[[${reference.title}]]`);
-            authorPageContent = `${authorPageContent.slice(0, referencesHeadingIndex)}\n${referenceLinks.join('\n')}${authorPageContent.slice(referencesHeadingIndex)}`;
-    
-            // Update the author page with the new content
-            await this.app.vault.modify(authorPage, authorPageContent);
-        } catch (error) {
-            console.error('Error updating author page:', error);
-        }
-    }
-    
-    
-        
-    async createAuthorPage(authorPagePath: string, authorName: string, references: Reference[]) {
-        try {
-            console.log(`Creating author page: ${authorPagePath}`);
-            const frontmatter = `---\ntitle: ${authorName}\n---`;
-            let authorPageContent = `${frontmatter}\n\n# ${authorName}`;
-    
-            // Check if any references exist for this author
-            const authorReferences = references.filter((reference) => {
-                const referenceAuthors = reference.author.split(' and ').map(name => name.trim());
-                return referenceAuthors.includes(authorName);
-            });
-    
-            if (authorReferences.length > 0) {
-                authorPageContent += '\n\n### References\n'; // Add the "References" heading
-                // Add reference links
-                authorReferences.forEach((reference) => {
-                    authorPageContent += `[[${reference.title}]]`;
-                });
-            }
-    
-            await this.app.vault.create(authorPagePath, authorPageContent);
-            console.log(`Created author page: ${authorPagePath}`);
-        } catch (error) {
-            console.error('Error creating author page:', error);
-        }
-    }
-    
-    
     
     async ensureFoldersExist() {
         await this.ensureFolderExists('Sources');
