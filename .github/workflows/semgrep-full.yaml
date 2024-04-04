@@ -10,8 +10,8 @@ on:
   push:
     branches: ["main"]
   # Schedule the CI job (this method uses cron syntax):
-  schedule:
-    - cron: '12 * * * *' # Sets Semgrep to scan every day at 12:00 UTC.
+  # schedule:
+  #  - cron: '12 * * * *' # Sets Semgrep to scan every day at 12:00 UTC.
     # It is recommended to change the schedule to a random time.
 
 jobs:
