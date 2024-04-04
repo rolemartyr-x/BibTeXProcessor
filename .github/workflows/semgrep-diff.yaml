@@ -1,7 +1,5 @@
 name: Semgrep Differential Scan
 on:
-  push:
-    branches: ["develop"]
   pull_request: {}
     
 jobs:
