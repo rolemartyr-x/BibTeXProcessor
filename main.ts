@@ -2,6 +2,7 @@ import { Plugin, Notice, normalizePath, TFolder, TFile } from 'obsidian';
 import { openBibTeXModal } from './interface';
 import { createAuthorPage, updateAuthorPageContent} from './authors';
 import { buildFrontmatter } from './frontmatter';
+import { parseBibTeX } from './parseBibTeX';
 
 export interface Reference {
     citeKey: string;
@@ -26,16 +27,16 @@ export interface Reference {
     eprint?: string;
 }
 
-interface Author {
+export interface Author {
     name: string;
 }
 
-interface BibTeXData {
+export interface BibTeXData {
     references: Reference[];
     authors: Author[];
 }
 
-interface BibTeXEntryData {
+export interface BibTeXEntryData {
     title?: string;
     author?: string;
     editor?: string;
@@ -89,7 +90,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
     async processBibTeX(bibtexData: string) {
         console.log('Processing BibTeX data:', bibtexData); // Check the BibTeX data
         // Parse BibTeX input
-        const parsedData = this.parseBibTeX(bibtexData);
+        const parsedData = await parseBibTeX(bibtexData);
         console.log('Parsed BibTeX data:', parsedData); // Check the parsed data
         if (!parsedData) {
             new Notice('Failed to parse BibTeX data.');
@@ -121,7 +122,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
             try {
                 console.log(`Creating reference page: ${referencePagePath}`); // Check if creating reference page
                 let referenceContent = `# ${title}`;
-                const frontmatter = buildFrontmatter(reference);
+                const frontmatter = await buildFrontmatter(reference);
 
                 if(reference.abstract != ""){
                     referenceContent = referenceContent + `\n## Abstract\n${reference.abstract}`;
@@ -166,7 +167,7 @@ export default class BibTeXProcessorPlugin extends Plugin {
         }
     }
     
-    parseBibTeX(bibtexInput: string): BibTeXData | null {
+    /* parseBibTeX(bibtexInput: string): BibTeXData | null {
         try {
             const references: Reference[] = [];
             const authors: Author[] = [];
@@ -240,5 +241,5 @@ export default class BibTeXProcessorPlugin extends Plugin {
             console.error(error);
             return null;
         }
-    }
+    } */
 }
