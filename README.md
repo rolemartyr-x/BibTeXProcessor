@@ -7,7 +7,7 @@ The BibTeX Processor Plugin for Obsidian allows you to easily process BibTeX dat
 - Take in BibTeX citations and create reference and author pages based on that citation
 - Creates a Sources folder with both a References and an Authors folder underneath
 - Automatically create author pages for each author in the BibTeX citation
-- Automatically create reference pages for each reaference in the BibTeX citation
+- Automatically create reference pages for each reference in the BibTeX citation
 
 ## Usage
 
