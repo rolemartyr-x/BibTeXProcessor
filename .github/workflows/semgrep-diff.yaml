@@ -6,6 +6,8 @@ jobs:
 
   semgrep-diff:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     container:
       image: returntocorp/semgrep
 
