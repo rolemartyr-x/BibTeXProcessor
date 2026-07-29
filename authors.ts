@@ -1,27 +1,35 @@
-import { TFile, Vault } from 'obsidian';
-import { Reference } from './main';
+import type { TFile, Vault } from 'obsidian';
+import { Reference } from './types';
+import { sanitizeFilename } from './sanitizeFilename';
+
+/**
+ * Computes the `[[wikilink]]` list for every reference authored by
+ * `authorName`, using the same sanitized filename that reference pages are
+ * created under so the links resolve correctly.
+ *
+ * Pure helper (no vault access) so it's easy to unit test.
+ */
+export function getAuthorReferenceLinks(authorName: string, references: Reference[]): string[] {
+    return references
+        .filter((reference) => {
+            const referenceAuthors = reference.author.split(' and ').map((name: string) => name.trim());
+            return referenceAuthors.includes(authorName);
+        })
+        .map((reference) => `[[${sanitizeFilename(reference.title)}]]`);
+}
 
 export async function createAuthorPage(authorPagePath: string, authorName: string, references: Reference[], vault: Vault) {
     try {
-        console.log(`Creating author page: ${authorPagePath}`);
         const frontmatter = `---\ntitle: ${authorName}\n---`;
         let authorPageContent = `${frontmatter}\n\n# ${authorName}`;
 
-        // Check if any references exist for this author
-        const authorReferences = references.filter((reference) => {
-            const referenceAuthors = reference.author.split(' and ').map((name: string) => name.trim());
-            return referenceAuthors.includes(authorName);
-        });
-
-        if (authorReferences.length > 0) {
+        const referenceLinks = getAuthorReferenceLinks(authorName, references);
+        if (referenceLinks.length > 0) {
             authorPageContent += '\n\n### References\n';
-            authorReferences.forEach((reference) => {
-                authorPageContent += `[[${reference.title}]]`;
-            });
+            authorPageContent += referenceLinks.join('');
         }
 
         await vault.create(authorPagePath, authorPageContent);
-        console.log(`Created author page: ${authorPagePath}`);
     } catch (error) {
         console.error('Error creating author page: ', error);
     }
@@ -49,16 +57,11 @@ export async function updateAuthorPageContent(authorPage: TFile, authorName: str
         }
 
         //Append the reference links
-        const referenceLinks = references
-            .filter((reference) => {
-                const referenceAuthors = reference.author.split(' and ').map((name: string) => name.trim());
-                return referenceAuthors.includes(authorName);
-            })
-            .map((reference) => `[[${reference.title}]]`);
+        const referenceLinks = getAuthorReferenceLinks(authorName, references);
         authorPageContent = `${authorPageContent.slice(0, referencesHeadingIndex)}\n${referenceLinks.join('\n')}${authorPageContent.slice(referencesHeadingIndex)}`;
 
         // Update the author page with the new content
-        await this.app.vault.modify(authorPage, authorPageContent);
+        await vault.modify(authorPage, authorPageContent);
     } catch (error) {
         console.error('Error updating author page: ', error);
     }

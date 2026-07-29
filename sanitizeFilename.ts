@@ -4,7 +4,7 @@ const ILLEGAL_FILENAME_CHARS = /[\\/:*?"<>|]/g;
 // Control characters (code points 0-31, plus DEL/127) are invalid/awkward in
 // filenames. Built from character codes (rather than a regex literal with an
 // escape range) to avoid embedding raw control bytes in the source file.
-const CONTROL_CHAR_CODES = [...Array(32).keys(), 127];
+const CONTROL_CHAR_CODES = [...Array.from({ length: 32 }, (_, i) => i), 127];
 const CONTROL_CHARS = new RegExp(
     `[${CONTROL_CHAR_CODES.map((code) => String.fromCharCode(code)).join('')}]`,
     'g'
@@ -25,12 +25,16 @@ const MAX_FILENAME_LENGTH = 200;
 export function sanitizeFilename(name: string): string {
     let sanitized = name
         .replace(CONTROL_CHARS, '')
-        .replace(ILLEGAL_FILENAME_CHARS, '_')
-        .replace(/\.\.+/g, '_');
+        .replace(ILLEGAL_FILENAME_CHARS, '_');
 
-    // Trim whitespace and stray leading/trailing dots (trailing dots are
-    // invalid on Windows, and leading dots risk creating hidden files).
-    sanitized = sanitized.trim().replace(/^\.+/, '').replace(/\.+$/, '').trim();
+    // Strip any leading/trailing run of dots and/or whitespace (trailing dots
+    // are invalid on Windows, leading dots risk creating hidden files, and a
+    // name that is entirely dots - e.g. "..".. must not survive as-is).
+    sanitized = sanitized.replace(/^[\s.]+/, '').replace(/[\s.]+$/, '');
+
+    // Collapse any remaining (interior) run of 2+ dots, defense-in-depth
+    // against ".." segments, since a "/" can no longer follow one here.
+    sanitized = sanitized.replace(/\.\.+/g, '_');
 
     if (sanitized.length > MAX_FILENAME_LENGTH) {
         sanitized = sanitized.slice(0, MAX_FILENAME_LENGTH).trim();

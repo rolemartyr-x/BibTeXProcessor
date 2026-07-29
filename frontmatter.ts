@@ -1,9 +1,10 @@
-import { Reference } from './main';
+import { Reference } from './types';
+import { sanitizeFilename } from './sanitizeFilename';
 
 export async function buildFrontmatter(reference: Reference): Promise<string> {
     const frontmatter: string[] = [];
-    const authors = reference.author.split(' and ').map((name: string) => `- "[[${name.trim()}]]"`).join('\n');
-    
+    const authors = reference.author.split(' and ').map((name: string) => `- "[[${sanitizeFilename(name.trim())}]]"`).join('\n');
+
     frontmatter.push(`---`);
     frontmatter.push(`citeKey: ${reference.citeKey}`);
     frontmatter.push(`title: ${reference.title}`);
