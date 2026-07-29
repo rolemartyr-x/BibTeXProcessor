@@ -1,6 +1,7 @@
 import type { TFile, Vault } from 'obsidian';
 import { Reference } from './types';
 import { sanitizeFilename } from './sanitizeFilename';
+import { yamlString } from './yaml';
 
 /**
  * Computes the `[[wikilink]]` list for every reference authored by
@@ -20,13 +21,13 @@ export function getAuthorReferenceLinks(authorName: string, references: Referenc
 
 export async function createAuthorPage(authorPagePath: string, authorName: string, references: Reference[], vault: Vault) {
     try {
-        const frontmatter = `---\ntitle: ${authorName}\n---`;
+        const frontmatter = `---\ntitle: ${yamlString(authorName)}\n---`;
         let authorPageContent = `${frontmatter}\n\n# ${authorName}`;
 
         const referenceLinks = getAuthorReferenceLinks(authorName, references);
         if (referenceLinks.length > 0) {
             authorPageContent += '\n\n### References\n';
-            authorPageContent += referenceLinks.join('');
+            authorPageContent += referenceLinks.join('\n');
         }
 
         await vault.create(authorPagePath, authorPageContent);

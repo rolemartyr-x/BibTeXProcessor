@@ -85,7 +85,7 @@ year={2020}
         expect(result?.authors).toHaveLength(0);
     });
 
-    it('defaults missing optional fields to empty string / zero', async () => {
+    it('defaults a missing year to 0 and leaves other missing optional fields undefined', async () => {
         const input = `@article{Minimal2020,
 title={Minimal Entry},
 author={Only, Author}
@@ -94,8 +94,8 @@ author={Only, Author}
         const result = await parseBibTeX(input);
         const reference = result?.references[0];
         expect(reference?.year).toBe(0);
-        expect(reference?.journal).toBe('');
-        expect(reference?.doi).toBe('');
+        expect(reference?.journal).toBeUndefined();
+        expect(reference?.doi).toBeUndefined();
     });
 
     it('splits multiple authors joined by " and " into separate author records', async () => {
@@ -127,6 +127,35 @@ year={2020}
     it('returns empty references/authors for input with no valid entries', async () => {
         const result = await parseBibTeX('not bibtex at all, just some text');
         expect(result).toEqual({ references: [], authors: [] });
+    });
+
+    it('carries every optional BibTeX field through to the parsed reference', async () => {
+        const input = `@book{Full2020,
+title={Full Entry},
+author={Some, Author},
+year={2020},
+editor={Some, Editor},
+publisher={Acme Press},
+number={7},
+booktitle={A Book},
+address={Nowhere},
+month={January},
+note={A note},
+isbn={123-456},
+issn={789-012}
+}`;
+
+        const result = await parseBibTeX(input);
+        const reference = result?.references[0];
+        expect(reference?.editor).toBe('Some, Editor');
+        expect(reference?.publisher).toBe('Acme Press');
+        expect(reference?.number).toBe('7');
+        expect(reference?.booktitle).toBe('A Book');
+        expect(reference?.address).toBe('Nowhere');
+        expect(reference?.month).toBe('January');
+        expect(reference?.note).toBe('A note');
+        expect(reference?.isbn).toBe('123-456');
+        expect(reference?.issn).toBe('789-012');
     });
 
     it('supports quote-delimited field values', async () => {

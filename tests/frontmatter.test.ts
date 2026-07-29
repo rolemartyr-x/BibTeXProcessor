@@ -16,8 +16,8 @@ describe('buildFrontmatter', () => {
     it('includes required fields and omits absent optional fields', async () => {
         const result = await buildFrontmatter(baseReference());
 
-        expect(result).toContain('citeKey: Doe_2020');
-        expect(result).toContain('title: A Sample Title');
+        expect(result).toContain('citeKey: "Doe_2020"');
+        expect(result).toContain('title: "A Sample Title"');
         expect(result).toContain('year: 2020');
         expect(result).not.toContain('publisher:');
         expect(result).not.toContain('journal:');
@@ -34,12 +34,22 @@ describe('buildFrontmatter', () => {
             isbn: '123-456',
         }));
 
-        expect(result).toContain('publisher: Acme Press');
-        expect(result).toContain('journal: Journal of Examples');
-        expect(result).toContain('volume: 3');
-        expect(result).toContain('pages: 1-10');
-        expect(result).toContain('doi: 10.1234/example');
-        expect(result).toContain('isbn: 123-456');
+        expect(result).toContain('publisher: "Acme Press"');
+        expect(result).toContain('journal: "Journal of Examples"');
+        expect(result).toContain('volume: "3"');
+        expect(result).toContain('pages: "1-10"');
+        expect(result).toContain('doi: "10.1234/example"');
+        expect(result).toContain('isbn: "123-456"');
+    });
+
+    it('quotes and escapes values containing YAML-significant characters', async () => {
+        const result = await buildFrontmatter(baseReference({
+            title: 'Word Studies: A Critical Study',
+            note: 'Contains a "quoted" phrase and a \\ backslash',
+        }));
+
+        expect(result).toContain('title: "Word Studies: A Critical Study"');
+        expect(result).toContain('note: "Contains a \\"quoted\\" phrase and a \\\\ backslash"');
     });
 
     it('lists multiple authors as separate sanitized wikilinks', async () => {

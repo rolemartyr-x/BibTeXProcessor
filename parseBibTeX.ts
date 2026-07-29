@@ -188,17 +188,12 @@ export async function parseBibTeX(bibtexInput: string): Promise<BibTeXData | nul
             // Check if it's a reference entry
             if (entryData.title && entryData.author) {
                 references.push({
+                    ...entryData,
                     citeKey,
-                    abstract: entryData.abstract || '',
-                    author: entryData.author,
                     title: entryData.title,
+                    author: entryData.author,
                     year: parseInt(entryData.year || '0', 10),
-                    journal: entryData.journal || '',
-                    volume: entryData.volume || '',
-                    pages: entryData.pages || '',
-                    doi: entryData.doi || '',
-                    url: entryData.url || '',
-                    eprint: entryData.eprint || ''
+                    abstract: entryData.abstract || '',
                 });
             }
 

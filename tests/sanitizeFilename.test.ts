@@ -40,4 +40,20 @@ describe('sanitizeFilename', () => {
         const withControlChars = 'bad' + String.fromCharCode(7) + 'name' + String.fromCharCode(31);
         expect(sanitizeFilename(withControlChars)).toBe('badname');
     });
+
+    it('strips square brackets so wikilinks cannot be prematurely terminated', () => {
+        expect(sanitizeFilename('Foo]] [[SomeOtherNote')).toBe('Foo__ __SomeOtherNote');
+        expect(sanitizeFilename('Foo]] [[SomeOtherNote')).not.toContain('[');
+        expect(sanitizeFilename('Foo]] [[SomeOtherNote')).not.toContain(']');
+    });
+
+    it('appends a suffix to Windows-reserved device names', () => {
+        expect(sanitizeFilename('CON')).toBe('CON_');
+        expect(sanitizeFilename('con')).toBe('con_');
+        expect(sanitizeFilename('COM1')).toBe('COM1_');
+        expect(sanitizeFilename('LPT9')).toBe('LPT9_');
+        // Not reserved names, should pass through untouched.
+        expect(sanitizeFilename('CONtent')).toBe('CONtent');
+        expect(sanitizeFilename('CONSTANTINE')).toBe('CONSTANTINE');
+    });
 });
