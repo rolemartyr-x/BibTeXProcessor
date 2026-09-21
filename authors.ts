@@ -1,5 +1,5 @@
 import type { TFile, Vault } from 'obsidian';
-import { Reference } from './types';
+import type { Reference } from './types';
 import { sanitizeFilename } from './sanitizeFilename';
 import { yamlString } from './yaml';
 

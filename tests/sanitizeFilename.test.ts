@@ -1,59 +1,61 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'node:test';
+import * as assert from 'node:assert/strict';
 import { sanitizeFilename } from '../sanitizeFilename';
 
 describe('sanitizeFilename', () => {
     it('leaves ordinary titles untouched', () => {
-        expect(sanitizeFilename('A Study of Word Meanings')).toBe('A Study of Word Meanings');
+        assert.strictEqual(sanitizeFilename('A Study of Word Meanings'), 'A Study of Word Meanings');
     });
 
     it('replaces characters illegal in filenames', () => {
-        expect(sanitizeFilename('Report: A/B Testing "Results" <2024>')).toBe(
+        assert.strictEqual(
+            sanitizeFilename('Report: A/B Testing "Results" <2024>'),
             'Report_ A_B Testing _Results_ _2024_'
         );
     });
 
     it('replaces backslashes, colons, asterisks, question marks, and pipes', () => {
-        expect(sanitizeFilename('a\\b:c*d?e|f')).toBe('a_b_c_d_e_f');
+        assert.strictEqual(sanitizeFilename('a\\b:c*d?e|f'), 'a_b_c_d_e_f');
     });
 
     it('collapses ".." sequences so paths cannot escape the target folder', () => {
-        expect(sanitizeFilename('../../etc/passwd')).not.toContain('..');
+        assert.ok(!sanitizeFilename('../../etc/passwd').includes('..'));
     });
 
     it('strips leading and trailing dots and whitespace', () => {
-        expect(sanitizeFilename('  ..hidden file..  ')).toBe('hidden file');
+        assert.strictEqual(sanitizeFilename('  ..hidden file..  '), 'hidden file');
     });
 
     it('falls back to a default name when nothing usable remains', () => {
-        expect(sanitizeFilename('')).toBe('untitled');
-        expect(sanitizeFilename('...')).toBe('untitled');
-        expect(sanitizeFilename('   ')).toBe('untitled');
+        assert.strictEqual(sanitizeFilename(''), 'untitled');
+        assert.strictEqual(sanitizeFilename('...'), 'untitled');
+        assert.strictEqual(sanitizeFilename('   '), 'untitled');
     });
 
     it('truncates excessively long names', () => {
         const longName = 'a'.repeat(500);
         const result = sanitizeFilename(longName);
-        expect(result.length).toBeLessThanOrEqual(200);
+        assert.ok(result.length <= 200);
     });
 
     it('strips control characters', () => {
         const withControlChars = 'bad' + String.fromCharCode(7) + 'name' + String.fromCharCode(31);
-        expect(sanitizeFilename(withControlChars)).toBe('badname');
+        assert.strictEqual(sanitizeFilename(withControlChars), 'badname');
     });
 
     it('strips square brackets so wikilinks cannot be prematurely terminated', () => {
-        expect(sanitizeFilename('Foo]] [[SomeOtherNote')).toBe('Foo__ __SomeOtherNote');
-        expect(sanitizeFilename('Foo]] [[SomeOtherNote')).not.toContain('[');
-        expect(sanitizeFilename('Foo]] [[SomeOtherNote')).not.toContain(']');
+        assert.strictEqual(sanitizeFilename('Foo]] [[SomeOtherNote'), 'Foo__ __SomeOtherNote');
+        assert.ok(!sanitizeFilename('Foo]] [[SomeOtherNote').includes('['));
+        assert.ok(!sanitizeFilename('Foo]] [[SomeOtherNote').includes(']'));
     });
 
     it('appends a suffix to Windows-reserved device names', () => {
-        expect(sanitizeFilename('CON')).toBe('CON_');
-        expect(sanitizeFilename('con')).toBe('con_');
-        expect(sanitizeFilename('COM1')).toBe('COM1_');
-        expect(sanitizeFilename('LPT9')).toBe('LPT9_');
+        assert.strictEqual(sanitizeFilename('CON'), 'CON_');
+        assert.strictEqual(sanitizeFilename('con'), 'con_');
+        assert.strictEqual(sanitizeFilename('COM1'), 'COM1_');
+        assert.strictEqual(sanitizeFilename('LPT9'), 'LPT9_');
         // Not reserved names, should pass through untouched.
-        expect(sanitizeFilename('CONtent')).toBe('CONtent');
-        expect(sanitizeFilename('CONSTANTINE')).toBe('CONSTANTINE');
+        assert.strictEqual(sanitizeFilename('CONtent'), 'CONtent');
+        assert.strictEqual(sanitizeFilename('CONSTANTINE'), 'CONSTANTINE');
     });
 });

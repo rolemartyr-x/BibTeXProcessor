@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'node:test';
+import * as assert from 'node:assert/strict';
 import { parseBibTeX } from '../parseBibTeX';
 
 describe('parseBibTeX', () => {
@@ -13,17 +14,17 @@ year={1887},
 pages={24} }`;
 
         const result = await parseBibTeX(input);
-        expect(result).not.toBeNull();
-        expect(result?.references).toHaveLength(1);
+        assert.notStrictEqual(result, null);
+        assert.strictEqual(result?.references.length, 1);
 
         const reference = result?.references[0];
-        expect(reference?.citeKey).toBe('Vincent_1887');
-        expect(reference?.title).toBe('Word studies in the New Testament');
-        expect(reference?.author).toBe('Vincent, Marvin Richardson');
-        expect(reference?.year).toBe(1887);
-        expect(reference?.volume).toBe('2');
+        assert.strictEqual(reference?.citeKey, 'Vincent_1887');
+        assert.strictEqual(reference?.title, 'Word studies in the New Testament');
+        assert.strictEqual(reference?.author, 'Vincent, Marvin Richardson');
+        assert.strictEqual(reference?.year, 1887);
+        assert.strictEqual(reference?.volume, '2');
 
-        expect(result?.authors).toEqual([{ name: 'Vincent, Marvin Richardson' }]);
+        assert.deepStrictEqual(result?.authors, [{ name: 'Vincent, Marvin Richardson' }]);
     });
 
     it('parses multiple entries, including ones separated by internal blank lines', async () => {
@@ -41,10 +42,10 @@ year={2021}
 }`;
 
         const result = await parseBibTeX(input);
-        expect(result?.references).toHaveLength(2);
-        expect(result?.references.map((r) => r.citeKey)).toEqual(['Smith2020', 'Doe2021']);
-        expect(result?.references[0].title).toBe('First Paper');
-        expect(result?.references[1].title).toBe('Second Paper');
+        assert.strictEqual(result?.references.length, 2);
+        assert.deepStrictEqual(result?.references.map((r) => r.citeKey), ['Smith2020', 'Doe2021']);
+        assert.strictEqual(result?.references[0].title, 'First Paper');
+        assert.strictEqual(result?.references[1].title, 'Second Paper');
     });
 
     it('handles multi-line field values, collapsing internal whitespace', async () => {
@@ -57,8 +58,8 @@ year={2022}
 }`;
 
         const result = await parseBibTeX(input);
-        expect(result?.references).toHaveLength(1);
-        expect(result?.references[0].title).toBe('A Title That Spans Multiple Lines');
+        assert.strictEqual(result?.references.length, 1);
+        assert.strictEqual(result?.references[0].title, 'A Title That Spans Multiple Lines');
     });
 
     it('handles field values that themselves contain an "=" character', async () => {
@@ -69,8 +70,8 @@ year={2023}
 }`;
 
         const result = await parseBibTeX(input);
-        expect(result?.references).toHaveLength(1);
-        expect(result?.references[0].title).toBe('Solving x=y for x');
+        assert.strictEqual(result?.references.length, 1);
+        assert.strictEqual(result?.references[0].title, 'Solving x=y for x');
     });
 
     it('skips entries missing the fields required to build a reference', async () => {
@@ -80,9 +81,9 @@ year={2020}
 }`;
 
         const result = await parseBibTeX(input);
-        expect(result?.references).toHaveLength(0);
+        assert.strictEqual(result?.references.length, 0);
         // No author field at all, so no author entries should be produced either.
-        expect(result?.authors).toHaveLength(0);
+        assert.strictEqual(result?.authors.length, 0);
     });
 
     it('defaults a missing year to 0 and leaves other missing optional fields undefined', async () => {
@@ -93,9 +94,9 @@ author={Only, Author}
 
         const result = await parseBibTeX(input);
         const reference = result?.references[0];
-        expect(reference?.year).toBe(0);
-        expect(reference?.journal).toBeUndefined();
-        expect(reference?.doi).toBeUndefined();
+        assert.strictEqual(reference?.year, 0);
+        assert.strictEqual(reference?.journal, undefined);
+        assert.strictEqual(reference?.doi, undefined);
     });
 
     it('splits multiple authors joined by " and " into separate author records', async () => {
@@ -106,7 +107,7 @@ year={2020}
 }`;
 
         const result = await parseBibTeX(input);
-        expect(result?.authors).toEqual([
+        assert.deepStrictEqual(result?.authors, [
             { name: 'First, One' },
             { name: 'Second, Two' },
             { name: 'Third, Three' },
@@ -121,12 +122,12 @@ year={2020}
 }`;
 
         const result = await parseBibTeX(input);
-        expect(result?.references[0].citeKey).toBe('Weird_Key_With_Spaces_');
+        assert.strictEqual(result?.references[0].citeKey, 'Weird_Key_With_Spaces_');
     });
 
     it('returns empty references/authors for input with no valid entries', async () => {
         const result = await parseBibTeX('not bibtex at all, just some text');
-        expect(result).toEqual({ references: [], authors: [] });
+        assert.deepStrictEqual(result, { references: [], authors: [] });
     });
 
     it('carries every optional BibTeX field through to the parsed reference', async () => {
@@ -147,15 +148,15 @@ issn={789-012}
 
         const result = await parseBibTeX(input);
         const reference = result?.references[0];
-        expect(reference?.editor).toBe('Some, Editor');
-        expect(reference?.publisher).toBe('Acme Press');
-        expect(reference?.number).toBe('7');
-        expect(reference?.booktitle).toBe('A Book');
-        expect(reference?.address).toBe('Nowhere');
-        expect(reference?.month).toBe('January');
-        expect(reference?.note).toBe('A note');
-        expect(reference?.isbn).toBe('123-456');
-        expect(reference?.issn).toBe('789-012');
+        assert.strictEqual(reference?.editor, 'Some, Editor');
+        assert.strictEqual(reference?.publisher, 'Acme Press');
+        assert.strictEqual(reference?.number, '7');
+        assert.strictEqual(reference?.booktitle, 'A Book');
+        assert.strictEqual(reference?.address, 'Nowhere');
+        assert.strictEqual(reference?.month, 'January');
+        assert.strictEqual(reference?.note, 'A note');
+        assert.strictEqual(reference?.isbn, '123-456');
+        assert.strictEqual(reference?.issn, '789-012');
     });
 
     it('supports quote-delimited field values', async () => {
@@ -166,7 +167,7 @@ year="2020"
 }`;
 
         const result = await parseBibTeX(input);
-        expect(result?.references[0].title).toBe('A Quoted Title');
-        expect(result?.references[0].year).toBe(2020);
+        assert.strictEqual(result?.references[0].title, 'A Quoted Title');
+        assert.strictEqual(result?.references[0].year, 2020);
     });
 });
