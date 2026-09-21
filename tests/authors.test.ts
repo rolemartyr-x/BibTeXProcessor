@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'node:test';
+import * as assert from 'node:assert/strict';
 import { getAuthorReferenceLinks } from '../authors';
-import { Reference } from '../types';
+import type { Reference } from '../types';
 
 function makeReference(overrides: Partial<Reference>): Reference {
     return {
@@ -20,7 +21,7 @@ describe('getAuthorReferenceLinks', () => {
             makeReference({ title: 'Paper Three', author: 'Doe, Jane and Smith, John' }),
         ];
 
-        expect(getAuthorReferenceLinks('Doe, Jane', references)).toEqual([
+        assert.deepStrictEqual(getAuthorReferenceLinks('Doe, Jane', references), [
             '[[Paper One]]',
             '[[Paper Three]]',
         ]);
@@ -31,7 +32,7 @@ describe('getAuthorReferenceLinks', () => {
             makeReference({ title: 'Paper One', author: 'Someone Else' }),
         ];
 
-        expect(getAuthorReferenceLinks('Doe, Jane', references)).toEqual([]);
+        assert.deepStrictEqual(getAuthorReferenceLinks('Doe, Jane', references), []);
     });
 
     it('sanitizes illegal filename characters in the linked reference title', () => {
@@ -39,7 +40,7 @@ describe('getAuthorReferenceLinks', () => {
             makeReference({ title: 'Report: A/B "Results"', author: 'Doe, Jane' }),
         ];
 
-        expect(getAuthorReferenceLinks('Doe, Jane', references)).toEqual([
+        assert.deepStrictEqual(getAuthorReferenceLinks('Doe, Jane', references), [
             '[[Report_ A_B _Results_]]',
         ]);
     });

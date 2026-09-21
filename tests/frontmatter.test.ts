@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'node:test';
+import * as assert from 'node:assert/strict';
 import { buildFrontmatter } from '../frontmatter';
-import { Reference } from '../types';
+import type { Reference } from '../types';
 
 function baseReference(overrides: Partial<Reference> = {}): Reference {
     return {
@@ -16,12 +17,12 @@ describe('buildFrontmatter', () => {
     it('includes required fields and omits absent optional fields', async () => {
         const result = await buildFrontmatter(baseReference());
 
-        expect(result).toContain('citeKey: "Doe_2020"');
-        expect(result).toContain('title: "A Sample Title"');
-        expect(result).toContain('year: 2020');
-        expect(result).not.toContain('publisher:');
-        expect(result).not.toContain('journal:');
-        expect(result).not.toContain('isbn:');
+        assert.ok(result.includes('citeKey: "Doe_2020"'));
+        assert.ok(result.includes('title: "A Sample Title"'));
+        assert.ok(result.includes('year: 2020'));
+        assert.ok(!result.includes('publisher:'));
+        assert.ok(!result.includes('journal:'));
+        assert.ok(!result.includes('isbn:'));
     });
 
     it('includes optional fields when present', async () => {
@@ -34,12 +35,12 @@ describe('buildFrontmatter', () => {
             isbn: '123-456',
         }));
 
-        expect(result).toContain('publisher: "Acme Press"');
-        expect(result).toContain('journal: "Journal of Examples"');
-        expect(result).toContain('volume: "3"');
-        expect(result).toContain('pages: "1-10"');
-        expect(result).toContain('doi: "10.1234/example"');
-        expect(result).toContain('isbn: "123-456"');
+        assert.ok(result.includes('publisher: "Acme Press"'));
+        assert.ok(result.includes('journal: "Journal of Examples"'));
+        assert.ok(result.includes('volume: "3"'));
+        assert.ok(result.includes('pages: "1-10"'));
+        assert.ok(result.includes('doi: "10.1234/example"'));
+        assert.ok(result.includes('isbn: "123-456"'));
     });
 
     it('quotes and escapes values containing YAML-significant characters', async () => {
@@ -48,8 +49,8 @@ describe('buildFrontmatter', () => {
             note: 'Contains a "quoted" phrase and a \\ backslash',
         }));
 
-        expect(result).toContain('title: "Word Studies: A Critical Study"');
-        expect(result).toContain('note: "Contains a \\"quoted\\" phrase and a \\\\ backslash"');
+        assert.ok(result.includes('title: "Word Studies: A Critical Study"'));
+        assert.ok(result.includes('note: "Contains a \\"quoted\\" phrase and a \\\\ backslash"'));
     });
 
     it('lists multiple authors as separate sanitized wikilinks', async () => {
@@ -57,9 +58,9 @@ describe('buildFrontmatter', () => {
             author: 'Doe, Jane and Smith, John and O’Neil, Sam',
         }));
 
-        expect(result).toContain('- "[[Doe, Jane]]"');
-        expect(result).toContain('- "[[Smith, John]]"');
-        expect(result).toContain('- "[[O’Neil, Sam]]"');
+        assert.ok(result.includes('- "[[Doe, Jane]]"'));
+        assert.ok(result.includes('- "[[Smith, John]]"'));
+        assert.ok(result.includes('- "[[O’Neil, Sam]]"'));
     });
 
     it('sanitizes illegal filename characters in author wikilinks', async () => {
@@ -67,15 +68,15 @@ describe('buildFrontmatter', () => {
             author: 'Doe: Jane/Q*A',
         }));
 
-        expect(result).toContain('- "[[Doe_ Jane_Q_A]]"');
-        expect(result).not.toContain('/');
+        assert.ok(result.includes('- "[[Doe_ Jane_Q_A]]"'));
+        assert.ok(!result.includes('/'));
     });
 
     it('wraps frontmatter in --- delimiters', async () => {
         const result = await buildFrontmatter(baseReference());
         const lines = result.split('\n');
 
-        expect(lines[0]).toBe('---');
-        expect(lines[lines.length - 1]).toBe('---');
+        assert.strictEqual(lines[0], '---');
+        assert.strictEqual(lines[lines.length - 1], '---');
     });
 });

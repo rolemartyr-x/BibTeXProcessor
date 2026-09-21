@@ -1,5 +1,5 @@
 import { Notice } from 'obsidian';
-import { Author, BibTeXData, BibTeXEntryData, Reference } from './types';
+import type { Author, BibTeXData, BibTeXEntryData, Reference } from './types';
 
 /**
  * Splits raw BibTeX text into individual `@entry{...}` chunks. Splits on `@`
